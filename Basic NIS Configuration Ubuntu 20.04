@@ -1,0 +1,87 @@
+Basic NIS Configuration Ubuntu 20.04
+
+apt -y install nis (put the domain you want to use, very important)
+
+nano /etc/hosts -> important step if you dont put your hostname with you server ip, its not going to work
+add -> ipserver hostname@domain hostname domain 
+
+nano /etc/default/nis
+NISSERVER=false ->change to NISSERVER=master ->this change is done so the machine knows that he is the NIS server
+
+nano /etc/ypserv.securenets (which are the subnets alowed in the NIS server)
+
+in the end add mask and network
+ex: 255.255.255.0		10.0.0.0
+
+dont comment 0.0.0.0 0.0.0.0 until you have all nis configuration working when ou have all configs done
+
+nano /etc/var/Makefile
+line 52 change false ->true
+line 56 change false ->true
+
+/usr/lib/yp/ypinit -m
+
+add all the hosts you done then Ctrl+d -> yes
+
+
+if this show up do systemctl restart nis and then do the same command again
+
+We need a few minutes to build the databases...
+Building /var/yp/azores.pt/ypservers...
+Running /var/yp/Makefile...
+make[1]: Entering directory '/var/yp/azores.pt'
+Updating passwd.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating passwd.byuid...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating group.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating group.bygid...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating hosts.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating hosts.byaddr...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating rpc.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating rpc.bynumber...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating services.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating services.byservicename...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating netid.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating protocols.bynumber...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating protocols.byname...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating netgroup...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating netgroup.byhost...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating netgroup.byuser...
+failed to send 'clear' to local ypserv: RPC: Program not registeredUpdating shadow.byname... Ignored -> merged with passwd
+make[1]: Leaving directory '/var/yp/azores.pt'
+
+server.azores.pt has been set up as a NIS master server.
+
+if you add users you need to do:
+
+cd /var/yp
+make
+
+Client
+
+/etc/hosts -> put the same as the the server (with the server IP and Hosts-> basicly copy paste into it)
+
+apt -y install nis
+
+nano /etc/yp.conf (in this file its told to client which is the NIS SRV)
+
+add in the end -> domain _________ server hostname.domain (ex: domain azores.pt server server.azores.pt)
+
+nano /etc/nsswitch.conf
+passwd:         files systemd nis -> add nis
+group:          files systemd nis -> add nis
+shadow:         files nis -> add nis
+gshadow:        files nis -> add nis
+
+hosts:          files dns nis -> add nis
+
+nano /etc/pam.d/common-session
+add in the end -> session optional        pam_mkhomedir.so skel=/etc/skel umask=077
+
+systemctl restart nis
+
+
+to check if the configuration is working login in both (server and cliente) with user created then make a file in one and check /var/homes/user to check if the new file is there
+
+
+
+
