@@ -1,0 +1,53 @@
+Partitions, LVM 
+
+in AWS
+go to EC2
+-> Create a machine (ubuntu or redhat)
+-> go to volumes create as many volumes you want to use in the configuration in this case i will use 4 Volumes of 1Gib each one(make sure that is the same zone as the machine if dont you cant use the volumes on that machine so be carefull)
+-> Attach them to the machine
+-> Associate an Elastic Ip so your public Ip doenst change 
+ 
+in the terminal (termius or putty)
+
+Partions
+to create a partition its needed to have 2 types of Partitions systems -> MBR (fdisk) or GPT(gdisk)
+MBR
+
+-> fdisk /dev/xvdf (here is created a partition on disk xvdf, to check which are the disks and the partitions-> lsblk)
+   -> m to check which options you have, n to make a new partition
+-> mkfs.ext4 /dev/xvdf1 (mkfs-> make file system, ext4-> which type of file system)
+-> mkdir /mnt/disk1 (here is cretated the file for the disk)(you can choose which name to give to this file)
+-> mount /dev/xvdf1 /mnt/disk1 (here its mouted the disk to his file)
+
+GPT
+
+-> gdisk /dev/xvdg (here is created a partition on disk xvdg)
+   -> m to check which options you have, n to make a new partition
+-> mkfs.xfs /dev/xvdg1 (mkfs-> make file system, xfs-> which type of file system)
+-> mkdir /mnt/disk2 (here is cretated the file for the disk)(you can choose which name to give to this file)
+-> mount /dev/xvdg1 /mnt/disk2 (here its mouted the disk to his file)-> in case it doenst work -> mount -t xfs -o nouuid /dev/xvdg1
+
+LVM (for this its needed 2 or more disks)
+
+-> fdisk /dev/xvdh (creating partitiond with fdisk system)
+-> fdisk /dev/xvdi (creating partitiond with fdisk system)
+-> mkdir /mnt/disk3 (this file is made to mount to the 2 disks(combined with LVM))
+-> pvcreate /dev/xvdh1 /dev/xvdi1 (here its created 2 Physical Volumes (pv) 1 for each of the partitions)
+-> vgcreate vg_disk /dev/xvdh1 /dev/xvdi1 (the vg_disk its a name that you choose)(here its made a Volume Group(with 2 partitions -> xvdh1 and xvdi1)
+-> lvcreate -l 100%FREE -n lv_disk vg_disk ( this comand its to create the Logical Volume (lv) with 100% of its capacity)
+-> lvdisplay ,vgdisplay and vgs are the commands to check if its done or not
+-> mkfs.xfs /dev/vg_disk/lv_disk (mkfs-> make file system, xfs-> which type of file system)
+-> mount /dev/vg_disk/lv_disk /mnt/disk3 
+
+ADD 1 Volume do the LVM
+
+-> you need to attach 1 Volume or use one you have(but need to be clean)
+-> fdisk /dev/xvdj (partiton of the new disk)
+-> vgextend vg_disk /dev/xvdj1 (here its extended the Volume Group done before)
+-> lvextend -l 100%FREE /dev/vg_disk/lv_disk (here its extended the Logical Volume)
+-> lvresize -l 100%FREE /dev/vg_disk/lv_disk (here its resized the Logical Volume (it was added the capacity of the new Volume to the Logical Volume))
+-> xfs_growfs /dev/mapper/vg_disk-lv_disk
+-> mount /dev/mapper/vg_disk-lv_disk /mnt/disk3 (you need to mount to add the changes done)
+
+
+
