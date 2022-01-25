@@ -4,7 +4,7 @@ in AWS
 go to EC2
 -> Create a machine (ubuntu or redhat)
 -> go to volumes create as many volumes you want to use in the configuration in this case i will use 4 Volumes of 1Gib each one(make sure that is the same zone as the machine if dont you cant use the volumes on that machine so be carefull)
--> Attach them to the machine
+-> Attach them to the machine (EC2->Volumes->Create Volume(in the same zone as the machine!)-> Actions-> Attach Volume)
 -> Associate an Elastic Ip so your public Ip doenst change 
  
 in the terminal (termius or putty)
