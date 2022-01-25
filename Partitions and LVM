@@ -22,7 +22,7 @@ MBR
 GPT
 
 -> gdisk /dev/xvdg (here is created a partition on disk xvdg)
-   -> m to check which options you have, n to make a new partition
+   -> m to check which options you have, n to make a new partition ,at the end "w" to save al the changes done
 -> mkfs.xfs /dev/xvdg1 (mkfs-> make file system, xfs-> which type of file system)
 -> mkdir /mnt/disk2 (here is cretated the file for the disk)(you can choose which name to give to this file)
 -> mount /dev/xvdg1 /mnt/disk2 (here its mouted the disk to his file)-> in case it doenst work -> mount -t xfs -o nouuid /dev/xvdg1
