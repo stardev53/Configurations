@@ -1,0 +1,119 @@
+Raid6 + LVM + Luks
+
+For this Configurations there are some possible ways of doing it for example:
+-> RAID --> LUKS --> LVM --> ext4(or xfs) (in case you want to use only 1 password)(line 7-69)
+-> RAID --> LVM --> LUKS --> ext4(or xfs) (in case you need to combine some Raids with LVM)(line 73-)
+
+RAID --> LUKS --> LVM --> ext469
+in AWS
+- its needed a machine (ubuntu or Redhat)
+- 4+ Volumes (since its Raid 6 its required atleast 4 disks/volumes)
+- attach all the volumes to the machine (EC2->Volumes->Create Volume(in the same zone as the machine!)-> Actions-> Attach Volume)
+
+In Terminal (Termius or Putty)
+
+-> Create a partition for each one of the volumes
+-> gdisk /dev/xvdf (do this for all the disks)
+   -> o (new empty GUID partition table (GPT)(to clean all the partitions done/to confirm its clean)-> n (new partition)-> fd00 this option is done on after chossing the side of the partition
+-> w to save the changes -> Y (to confirm all the options)
+
+RAID 6
+-> mdadm --create /dev/md0 --level 6 --raid-devices 4 /dev/xvdf1 /dev/xvdg1 /dev/xvdh1 /dev/xvdi1 (here you need to put all the partitions you want to use on the Raid, and since its an RAID6 you need atleast 4)(md0 is a name that you choose)
+-> mdadm --detail /dev/md0
+   ->(after you do the command above wait for,do the command again until it shows that)
+	State : clean
+	Active Devices : 4
+	Working Devices : 4
+	Failed Devices : 0
+	Spare Devices : 0
+
+LUCKS
+
+this configurations is made so you can encrypt the volume
+
+-> cryptsetup luksFormat --hash=sha512 --key-size=512 --cipher=aes-xts-plain64 --verify-passphrase /dev/md0 (here you encrypting the md0(the keysize it can different there is other type of key sizes)
+  -> YES and write the Password you want, be carefull this will override data on /dev/md0 
+-> cryptsetup luksOpen /dev/md0 md0_crypt (md0_crypt this can be any name you want)
+
+LVM
+
+-> pvcreate /dev/mapper/md0_crypt (here its created the phsical volume)
+-> vgcreate vg0 /dev/mapper/md0_crypt ( here its made the volume group)
+-> lvcreate -n lv0 -l +100%FREE vg0   ( and here the logical volume)
+
+-> mkfs.ext4 /dev/mapper/md0_crypt (you only can do this if cryptsetup luksOpen /dev/md0 md0_crypt worked)
+After the Raid + Lucks + Lvm are done do:
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ -> [WARNING: if in the next 2 lines is > insted of >> you will need to start all again so be carefull]
+blkid | grep cryp >> /etc/crypttab [you should have 1 line with TYPE="crypto_LUKS" and the other with TYPE="ext4"]
+blkid | grep cryp >> /etc/fstab [you should have 1 line with TYPE="crypto_LUKS" and the other with TYPE="ext4"]
+
+-> nano /etc/crypttab
+   -> md0_crypt UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx none luks [The UUID is on the line with TYPE="crypto_LUKS" ,comment this 2 lines (/dev/md0 e /dev/mapper/md0_crypt)]
+
+-> nano /etc/fstab
+   -> UUID=yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy /mnt/raid6 ext4 defaults,nofail 0 0 [the UUID is on the line with TYPE="ext4" , comment this 2 lines (/dev/md0 e /dev/mapper/md0_crypt)]
+-> mount -a
+-------------------------------------------------------------------------------------OR--------------------------------------------------------------------------------------------------------------------------
+->  mkdir /mnt/______________
+-> mount /dev/vg0/lv0 /mnt/___________
+-> cat /etc/mtab -> in this step you need to copy the line associated with the mount command
+-> nano /fstab -> and paste it inside
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-> in the end reboot ,it should ask the password to mount the disk
+
+-> commands you should use to check:
+	-> df -h -> check if it says /mnt/raid6( it should show /mnt/raid6 is mounted in /dev/mapper/md0_crypt and that it has 1/2 of the size of the 4 disks)
+	-> mdadm --detail /dev/md0 ( it shows that is raid6 and which are the volumes that form the raid and it should say "State: Clean"
+	-> cryptsetup luksDump /dev/md/md0 (it shows details of the encryption)
+	-> lsblk to show the partitions and the disks
+	
+	
+	
+RAID --> LVM --> LUKS --> xfs
+
+gdisk /dev/xvdj creating a partition on disk xvdj
+gdisk /dev/xvdk creating a partition on disk xvdk
+gdisk /dev/xvdl creating a partition on disk xvdl
+gdisk /dev/xvdm creating a partition on disk xvdm
+-> o (new empty GUID partition table (GPT)(to clean all the partitions done/to confirm its clean)-> n (new partition)-> fd00 this option is done on after chossing the side of the partition
+
+ RAID 6   
+mdadm --create /dev/md1 --level 6 --raid-devices 4 /dev/xvdj1 /dev/xvdk1 /dev/xvdl1 /dev/xvdm1 (here you need to put all the partitions you want to use on the Raid, and since its an RAID6 you need atleast 4)(md1 is a name that you choose)
+mdadm --detail /dev/md1
+ ->(after you do the command above wait for,do the command again until it shows that)
+	State : clean
+	Active Devices : 4
+	Working Devices : 4
+	Failed Devices : 0
+	Spare Devices : 0
+
+LVM 
+
+pvcreate /dev/md1 (here its created the phsical volume)
+vgcreate vg1 /dev/md1 (here its made the volume group)
+lvcreate -n lv0 -l +100%FREE vg1 (and here the logical volume)
+
+LUKS
+
+cryptsetup luksFormat --hash=sha512 --key-size=512 --cipher=aes-xts-plain64 --verify-passphrase /dev/vg1/lv0
+cryptsetup luksOpen /dev/vg1/lv0 lv0_crypt
+
+mkfs.xfs /dev/mapper/lv0_crypt
+
+mkdir /mnt/________
+mount /dev/mapper/lv0_crypt /mnt/_______
+
+-> cat /etc/mtab -> in this step you need to copy the line associated with the mount command
+-> nano /fstab -> and paste it inside
+
+-> in the end reboot ,it should ask the password to mount the disk
+
+-> commands you should use to check:
+	-> df -h -> check if it says /mnt/raid6( it should show /mnt/raid6 is mounted in /dev/mapper/md0_crypt and that it has 1/2 of the size of the 4 disks)
+	-> mdadm --detail /dev/md0 ( it shows that is raid6 and which are the volumes that form the raid and it should say "State: Clean"
+	-> cryptsetup luksDump /dev/md/md0 (it shows details of the encryption)
+	-> lsblk to show the partitions and the disks
+	
+
+
