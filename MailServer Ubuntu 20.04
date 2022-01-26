@@ -1,0 +1,97 @@
+Basic Mail server Configurations Ubuntu 20.04
+
+in AWS
+-> you need 1 VPC(default is enough)
+-> 2 machines (1 server 1 client)
+-> 2 Elastic Ips 1 for each of the machines
+
+In Terminal (termius or putty)
+
+Server
+
+-> sudo hostnamectl set-hostname _______.domain.com -> you need to change your hostname
+
+-> apt update && apt -y upgrade && - apt -y install postfix postfix-doc dovecot-imapd dovecot-pop3d lisas12-devsas12-bin
+       ->select 2nd option -> put your domain
+
+-> dpkg-reconfigure postfix (this command is to reconfigure the postfix)
+
+-> select 2nd option -> put your domain -> "ubuntu" -> in this option dont change anything -> "no" -> in this option clean all -> "0" -> "+" -> and select ipv4,ipv6 or both
+
+
+-> nano /etc/default/saslauthd
+
+          START = yes
+          OPTIONS = “ copy line 54 and put it here”
+
+
+
+
+POSTFIX
+
+-> nano /etc/postfix/sasl/smtpd.conf
+
+-> put the next 2 lines inside
+
+   pwcheck_method: saslauthd
+   mech_list: PLAIN LOGIN
+
+-> nano /etc/postfix/main.cf (you only do this step if you use a certificate)
+
+   smtpd_tls_cert_file=/etc/ssl/certs/______.crt
+   smtpd_tls_key_file=/etc/ssl/private/_____.key
+
+-> nano /etc/postfix/master.cf
+   uncomment on the 1st group
+     submission inet n       -       y       -       -       smtpd
+     -o syslog_name=postfix/submission
+     -o smtpd_tls_security_level=encrypt
+     -o smtpd_sasl_auth_enable=yes
+and this -> -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+
+   uncomment on 2nd group
+   smtps     inet  n       -       y       -       -       smtpd
+   -o syslog_name=postfix/smtps
+   -o smtpd_tls_wrappermode=yes
+   -o smtpd_sasl_auth_enable=yes
+and this -> -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+
+
+
+DOVECOT
+
+-> nano /etc/dovecot/conf.d/10-auth.conf
+   disable_plaintext_auth = yes -> uncomment and change yes -> no
+
+-> nano /etc/dovecot/conf.d/10-mail.conf
+
+   uncomment mail_location = maildir:~/Maildir
+   comment -> mail_location= mbox:~/mail :INBOX =/var/mail/%u
+
+nano /etc/dovecot/conf.d/10-ssl.conf -> only do this step if you have certificates
+ssl_cert = </etc/ssl/certs/________.crt (change for the name of your certificate)
+ssl_key = </etc/ssl/private/________.key (change for the name of your certificate's key)
+
+-> cd  /etc/skel
+-> do the next command -> maildirmake.dovecot Maildir
+
+-> adduser postfix sasl
+-> adduser dovecot sasl
+
+-> adduser ___________
+
+-> systemctl restart saslauthd postfix dovecot
+
+
+
+Cliente
+
+-> sudo hostnamectl set-hostname ________.domain.com (the same domain as the server)(the domain and hostname are the name that you want)
+-> apt update && apt -y upgrade
+
+-> install a Graphic interface with thunderbird
+-> check this link -> https://gist.github.com/jdmedeiros/32bbb759d74860d1de92c6a2c34f96f1 (ignore the adduser and the login)(replace filezilla with thunderbird)(on the first step use 2nd option)
+
+->adduser ___________
+-> cp /home/ubuntu/.xsession /home/______/.xsession
+-> chown ________:_______ /home/_______/.xsession 
