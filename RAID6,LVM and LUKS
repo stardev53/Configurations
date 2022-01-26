@@ -2,7 +2,7 @@ Raid6 + LVM + Luks
 
 For this Configurations there are some possible ways of doing it for example:
 -> RAID --> LUKS --> LVM --> ext4(or xfs) (in case you want to use only 1 password)(line 7-69)
--> RAID --> LVM --> LUKS --> ext4(or xfs) (in case you need to combine some Raids with LVM)(line 73-)
+-> RAID --> LVM --> LUKS --> ext4(or xfs) (in case you need to combine some Raids with LVM)(line 73-116)
 
 RAID --> LUKS --> LVM --> ext469
 in AWS
