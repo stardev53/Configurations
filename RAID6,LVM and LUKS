@@ -4,7 +4,7 @@ For this Configurations there are some possible ways of doing it for example:
 -> RAID --> LUKS --> LVM --> ext4(or xfs) (in case you want to use only 1 password)(line 7-69)
 -> RAID --> LVM --> LUKS --> ext4(or xfs) (in case you need to combine some Raids with LVM)(line 73-116)
 
-RAID --> LUKS --> LVM --> ext469
+RAID --> LUKS --> LVM --> ext4
 in AWS
 - its needed a machine (ubuntu or Redhat)
 - 4+ Volumes (since its Raid 6 its required atleast 4 disks/volumes)
@@ -27,7 +27,7 @@ RAID 6
 	Failed Devices : 0
 	Spare Devices : 0
 
-LUCKS
+LUKS
 
 this configurations is made so you can encrypt the volume
 
