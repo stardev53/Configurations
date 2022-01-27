@@ -41,7 +41,7 @@ LVM
 -> vgcreate vg0 /dev/mapper/md0_crypt ( here its made the volume group)
 -> lvcreate -n lv0 -l +100%FREE vg0   ( and here the logical volume)
 
--> mkfs.ext4 /dev/mapper/md0_crypt (you only can do this if cryptsetup luksOpen /dev/md0 md0_crypt worked)
+-> mkfs.ext4 /dev/mapper/md0_crypt (you only can do this if cryptsetup luksOpen /dev/md0 md0_crypt worked) <------ mkfs.xfs /dev/vg0/lv0
 After the Raid + Lucks + Lvm are done do:
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  -> [WARNING: if in the next 2 lines is > insted of >> you will need to start all again so be carefull]
